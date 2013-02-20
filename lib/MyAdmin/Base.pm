@@ -29,6 +29,7 @@ sub import {
         module => [qw(Text::Xslate::Bridge::Star)],
         function => {
             c => sub { $pkg->context },
+            uri_for => sub { $pkg->context->uri_for(@_) },
         },
     );
     *{"${pkg}::create_view"} = sub { $view };
