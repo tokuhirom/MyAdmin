@@ -1,0 +1,7 @@
+[% WRAPPER 'mysql/include/layout.tt' %]
+
+<h1>Schema from [% database %].[% table %]</h1>
+
+<pre>[% schema %]</pre>
+
+[% END %]

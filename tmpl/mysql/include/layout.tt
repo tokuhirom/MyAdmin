@@ -2,13 +2,15 @@
 <html>
 <head>
 <meta charset=utf8>
-<title>MyAdmin::TheSchwartz</title>
+<title>MyAdmin::MySQL</title>
 <link href="[% c().uri_for('/static/bootstrap/css/bootstrap.min.css') %]" rel="stylesheet" type="text/css" />
 <!--[if lt IE 9]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
 </head>
 <body>
+
+    <h1><a href="[% uri_for('/') %]">MyAdmin::MySQL</a></h1>
 
     [% content %]
 
