@@ -46,6 +46,9 @@ sub import {
 
     *{"${pkg}::to_app"} = sub {
         my ($class, $config) = @_;
+        unless ($config && ref $config eq 'HASH') {
+            Carp::croak("Usage: ${pkg}->to_app(\%config)");
+        }
         sub {
             local *{"${pkg}::config"} = sub { $config };
             $class->handle_request(shift);

@@ -1,0 +1,16 @@
+[% WRAPPER 'mysql/include/layout.tt' %]
+
+<h1>mysql databases</h1>
+
+<table class="table table-bordered table-hover">
+    <tr>
+        <th>Database</th>
+    </tr>
+[% FOR database IN databases %]
+    <tr>
+        <td><a href="[% c().uri_for('/database', {database => $database}) %]">[% database %]</a></td>
+    </tr>
+[% END %]
+</table>
+
+[% END %]
