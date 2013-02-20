@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<meta charset=utf8>
+<title>MyAdmin::TheSchwartz</title>
+<link href="[% c().uri_for('/static/bootstrap/css/bootstrap.min.css') %]" rel="stylesheet" type="text/css" />
+<!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+</head>
+<body>
+
+<h1>State of TheSchwartz</h1>
+
+[% FOR result IN results %]
+    <table class="table table-bordered table-hover">
+        <tr>
+            <th>Function</th>
+            <th>Count</th>
+        </tr>
+        [% FOR row IN results %]
+        <tr>
+            <td>[% row.funcname %]</td>
+            <td>[% row.count %]</td>
+        </tr>
+        [% END %]
+    </table>
+[% END %]
+</body>
+</html>
