@@ -1,0 +1,24 @@
+[% WRAPPER 'mysql/include/layout.tt' %]
+
+<h1>Contents from [% database %].[% table %]</h1>
+
+<table class="table table-bordered table-hover">
+    <tr>
+    [% FOR name IN names %]
+        <th>[% name %]</th>
+        <!-- [% type_names[loop.count] %] -->
+    [% END %]
+        <th>&nbsp;</th>
+        <th>&nbsp;</th>
+    </tr>
+[% FOR row IN rows %]
+    <tr>
+        [% FOR col IN row %]
+        <td style="[% IF right[loop.count] %]text-align:right[% END %]">[% col %]</td>
+        [% END %]
+    </tr>
+[% END %]
+</table>
+[% INCLUDE 'mysql/include/pager.tt' WITH pager=pager %]
+
+[% END %]

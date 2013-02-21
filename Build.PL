@@ -18,6 +18,7 @@ my $build = Module::Build->new(
         'Exporter'                      => '0',
         'parent'                        => '0',
         'Plack'                         => '0.9949',
+        'Data::Page::NoTotalEntries'    => 0,
     },
 
     no_index    => { 'directory' => [ 'inc' ] },

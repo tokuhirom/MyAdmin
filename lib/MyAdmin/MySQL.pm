@@ -4,14 +4,19 @@ use warnings;
 use utf8;
 
 use MyAdmin::Base -base;
+use Data::Page::NoTotalEntries;
 
 use DBI;
 
 sub dbh {
     my $c = shift;
-    $c->{dbh} ||= DBI->connect(
-        @{$c->config->{database}}
-    ) or die $DBI::errstr;
+    $c->{dbh} ||= do {
+        my @config = @{$c->config->{database}};
+        $config[3]->{mysql_enable_utf8} //= 1;
+        DBI->connect(
+            @config
+        ) or die $DBI::errstr;
+    };
 }
 
 sub _validate {
@@ -69,7 +74,46 @@ get '/database' => sub {
 };
 
 get '/list' => sub {
-    ... # yes. it's not implemented yet.
+    my $c = shift;
+    $c->use_db();
+
+    my $table            = $c->table;
+    my $page             = 0 + ( $c->req->param('page') // 1 );
+    my $entries_per_page = 0 + 10;
+    my $offset           = ( $page - 1 ) * $entries_per_page;
+    my $sth              = $c->dbh->prepare(qq{SELECT * FROM $table LIMIT ? OFFSET ?});
+    $sth->execute($entries_per_page+1, $offset);
+    my @names = @{$sth->{NAME}};
+    my @right;
+    my @type_names = @{$sth->{mysql_type_name}};
+    for my $i (0..@names-1) {
+        $right[$i] = $sth->{mysql_type_name}->[$i] eq 'integer';
+    }
+    my @rows;
+    while (my @row = $sth->fetchrow_array()) {
+        push @rows, \@row;
+    }
+    my $has_next = 0;
+    if (@rows==$entries_per_page+1) {
+        pop @rows;
+        $has_next++;
+    }
+    my $pager = Data::Page::NoTotalEntries->new(
+        has_next => $has_next,
+        entries_per_page => $entries_per_page,
+        current_page => $page,
+    );
+    $c->render(
+        'mysql/list.tt' => {
+            names => \@names,
+            rows => \@rows,
+            database => $c->database,
+            table => $c->table,
+            right => \@right,
+            type_names => \@type_names,
+            pager => $pager,
+        },
+    );
 };
 
 get '/schema' => sub {

@@ -30,6 +30,7 @@ sub import {
         function => {
             c => sub { $pkg->context },
             uri_for => sub { $pkg->context->uri_for(@_) },
+            uri_with => sub { $pkg->context->request->uri_with(@_) },
         },
     );
     *{"${pkg}::create_view"} = sub { $view };
