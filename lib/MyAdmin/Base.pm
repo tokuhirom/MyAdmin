@@ -9,9 +9,13 @@ use Plack::App::File;
 use Text::Xslate;
 
 sub import {
+    my $class = shift;
     my $pkg = caller(0);
 
-    return unless $_[1] eq '-base';
+    return unless $_[0] eq '-base';
+    shift @_;
+
+    my %args = @_;
 
     no strict 'refs';
     unshift @{"${pkg}::ISA"}, 'Amon2';
@@ -23,16 +27,7 @@ sub import {
 
     $pkg->router->connect('/static/*', { code => \&_static }, {method => ['GET', 'HEAD']});
 
-    my $view = Text::Xslate->new(
-        syntax => 'TTerse',
-        path => [File::Spec->catfile($pkg->base_dir(), 'tmpl/')],
-        module => [qw(Text::Xslate::Bridge::Star)],
-        function => {
-            c => sub { $pkg->context },
-            uri_for => sub { $pkg->context->uri_for(@_) },
-            uri_with => sub { $pkg->context->request->uri_with(@_) },
-        },
-    );
+    my $view = $class->_init_xslate($pkg, $args{'-xslate'});
     *{"${pkg}::create_view"} = sub { $view };
 
     *{"${pkg}::dispatch"} = sub {
@@ -56,6 +51,31 @@ sub import {
             $class->handle_request(shift);
         };
     };
+}
+
+sub _init_xslate {
+    my $class = shift;
+    my $pkg = shift;
+    my %xslate_opts = %{ $_[0] || {} };
+    my %xslate_args = (
+        syntax => 'TTerse',
+        module => [qw(Text::Xslate::Bridge::Star)],
+        function => {
+            c => sub { $pkg->context },
+            uri_for => sub { $pkg->context->uri_for(@_) },
+            uri_with => sub { $pkg->context->request->uri_with(@_) },
+        },
+    );
+    if (my $tmpl_dirname = delete $xslate_opts{tmpl_dirname}) {
+        unshift @{$xslate_args{path}}, File::Spec->catfile($pkg->base_dir(), 'tmpl/', $tmpl_dirname);
+    }
+    if (my $mods = delete $xslate_opts{module}) {
+        push @{$xslate_args{module}}, @$mods;
+    }
+    if (my $functions = delete $xslate_opts{functions}) {
+        push %{$xslate_args{functions}}, %$functions;
+    }
+    return Text::Xslate->new(%xslate_args);
 }
 
 sub _static {

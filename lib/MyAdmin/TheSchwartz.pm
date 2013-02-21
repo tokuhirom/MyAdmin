@@ -4,7 +4,11 @@ use warnings;
 use utf8;
 use DBI;
 
-use MyAdmin::Base -base;
+use MyAdmin::Base '-base' => (
+    '-xslate' => {
+        tmpl_dirname => 'schwartz',
+    }
+);
 
 get '/' => sub {
     my $c = shift;
@@ -28,7 +32,7 @@ get '/' => sub {
         $dbh->disconnect;
     }
     return $c->render(
-        'schwartz/index.tt', {
+        'index.tt', {
             results => \@results
         }
     );

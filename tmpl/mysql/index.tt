@@ -1,4 +1,4 @@
-[% WRAPPER 'mysql/include/layout.tt' %]
+[% WRAPPER 'include/layout.tt' %]
 
 <h1>mysql databases</h1>
 

@@ -1,4 +1,4 @@
-[% WRAPPER 'mysql/include/layout.tt' %]
+[% WRAPPER 'include/layout.tt' %]
 
 <h1>Contents from [% database %].[% table %]</h1>
 
@@ -19,6 +19,6 @@
     </tr>
 [% END %]
 </table>
-[% INCLUDE 'mysql/include/pager.tt' WITH pager=pager %]
+[% INCLUDE 'include/pager.tt' WITH pager=pager %]
 
 [% END %]

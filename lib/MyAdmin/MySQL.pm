@@ -3,10 +3,15 @@ use strict;
 use warnings;
 use utf8;
 
-use MyAdmin::Base -base;
 use Data::Page::NoTotalEntries;
 
 use DBI;
+
+use MyAdmin::Base -base => (
+    -xslate => {
+        tmpl_dirname => 'mysql',
+    }
+);
 
 sub dbh {
     my $c = shift;
@@ -53,7 +58,7 @@ get '/' => sub {
         $dbh->selectall_arrayref(q{SHOW DATABASES});
     };
 
-    $c->render('mysql/index.tt' => {
+    $c->render('index.tt' => {
         databases => \@databases,
     });
 };
@@ -67,7 +72,7 @@ get '/database' => sub {
         $c->dbh->selectall_arrayref(q{SHOW TABLES});
     };
 
-    $c->render('mysql/database.tt' => {
+    $c->render('database.tt' => {
         database => $c->database,
         tables => \@tables,
     });
@@ -104,7 +109,7 @@ get '/list' => sub {
         current_page => $page,
     );
     $c->render(
-        'mysql/list.tt' => {
+        'list.tt' => {
             names => \@names,
             rows => \@rows,
             database => $c->database,
@@ -126,7 +131,7 @@ get '/schema' => sub {
         $c->dbh->selectall_arrayref(qq{SHOW CREATE TABLE $table});
     };
 
-    $c->render('mysql/schema.tt' => {
+    $c->render('schema.tt' => {
         database => scalar($c->req->param('database')),
         table => $table,
         schema => $schema,
