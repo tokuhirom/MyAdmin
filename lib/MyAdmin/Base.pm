@@ -7,6 +7,7 @@ use Amon2::Web;
 use Router::Simple::Sinatraish ();
 use Plack::App::File;
 use Text::Xslate;
+use Try::Lite;
 
 sub import {
     my $class = shift;
@@ -35,7 +36,17 @@ sub import {
 
         my $p = $pkg->router->match($c->req->env);
         if ($p) {
-            $p->{code}->($c, $p);
+            try {
+                $p->{code}->($c, $p);
+            }
+                'MyAdmin::Exception' => sub {
+                    my $e = $@;
+                    $c->render(
+                        'error.tt' => {
+                            exception => $e,
+                        }
+                    );
+                };
         } else {
             $c->res_404();
         }
@@ -44,7 +55,7 @@ sub import {
     *{"${pkg}::to_app"} = sub {
         my ($class, $config) = @_;
         unless ($config && ref $config eq 'HASH') {
-            Carp::croak("Usage: ${pkg}->to_app(\%config)");
+            Carp::croak("Usage: ${pkg}->to_app(\\%config)");
         }
         sub {
             local *{"${pkg}::config"} = sub { $config };

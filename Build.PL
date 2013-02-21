@@ -19,6 +19,8 @@ my $build = Module::Build->new(
         'parent'                        => '0',
         'Plack'                         => '0.9949',
         'Data::Page::NoTotalEntries'    => 0,
+        'Exception::Tiny'               => 0,
+        'Try::Lite' => '0.0.2',
     },
 
     no_index    => { 'directory' => [ 'inc' ] },

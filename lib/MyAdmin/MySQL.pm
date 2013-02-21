@@ -6,6 +6,7 @@ use utf8;
 use Data::Page::NoTotalEntries;
 
 use DBI;
+use MyAdmin::Exception;
 
 use MyAdmin::Base -base => (
     -xslate => {
@@ -20,7 +21,7 @@ sub dbh {
         $config[3]->{mysql_enable_utf8} //= 1;
         DBI->connect(
             @config
-        ) or die $DBI::errstr;
+        ) or MyAdmin::Exception->throw($DBI::errstr);
     };
 }
 

@@ -1,0 +1,7 @@
+[% WRAPPER 'include/layout.tt' %]
+
+<h1>Error</h1>
+
+[% exception.message %]
+
+[% END %]
