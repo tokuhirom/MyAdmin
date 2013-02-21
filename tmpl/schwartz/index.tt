@@ -10,21 +10,23 @@
 </head>
 <body>
 
-<h1>State of TheSchwartz</h1>
+    <div class="container">
+        <h1>State of TheSchwartz</h1>
 
-[% FOR result IN results %]
-    <table class="table table-bordered table-hover">
-        <tr>
-            <th>Function</th>
-            <th>Count</th>
-        </tr>
-        [% FOR row IN results %]
-        <tr>
-            <td>[% row.funcname %]</td>
-            <td>[% row.count %]</td>
-        </tr>
+        [% FOR result IN results %]
+            <table class="table table-bordered table-hover">
+                <tr>
+                    <th>Function</th>
+                    <th>Count</th>
+                </tr>
+                [% FOR row IN results %]
+                <tr>
+                    <td>[% row.funcname %]</td>
+                    <td>[% row.count %]</td>
+                </tr>
+                [% END %]
+            </table>
         [% END %]
-    </table>
-[% END %]
+    </div>
 </body>
 </html>

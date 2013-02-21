@@ -4,15 +4,29 @@
 <meta charset=utf8>
 <title>MyAdmin::MySQL</title>
 <link href="[% c().uri_for('/static/bootstrap/css/bootstrap.min.css') %]" rel="stylesheet" type="text/css" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!--[if lt IE 9]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
 <![endif]-->
+<style>
+body {
+    padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+</style>
 </head>
 <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="brand" href="[% uri_for('/') %]">MyAdmin::MySQL</a>
+            </div>
+        </div>
+    </div>
 
-    <h1><a href="[% uri_for('/') %]">MyAdmin::MySQL</a></h1>
-
-    [% content %]
+    <div class="container">
+        [% content %]
+    </div>
+</div>
 
 </body>
 </html>
