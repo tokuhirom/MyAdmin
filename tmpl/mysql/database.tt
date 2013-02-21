@@ -1,6 +1,9 @@
 [% WRAPPER 'include/layout.tt' %]
 
-<h1>mysql table from [% database %]</h1>
+<ul class="breadcrumb">
+    <li><a href="[% uri_for('/') %]">Home</a> <span class="divider">/</span></li>
+    <li class="active">[% database %]</li>
+</ul>
 
 <table class="table table-bordered table-hover">
     <tr>

@@ -1,6 +1,8 @@
 [% WRAPPER 'include/layout.tt' %]
 
-<h1>mysql databases</h1>
+<ul class="breadcrumb">
+    <li class="active">Home</li>
+</ul>
 
 <table class="table table-bordered table-hover">
     <tr>

@@ -1,6 +1,17 @@
 [% WRAPPER 'include/layout.tt' %]
 
-<h1>Schema from [% database %].[% table %]</h1>
+<ul class="breadcrumb">
+    <li><a href="[% uri_for('/') %]">Home</a> <span class="divider">/</span></li>
+    <li><a href="[% uri_for('/database', {database=>$database}) %]">[% database %]</a> <span class="divider">/</span></li>
+    <li class="active">[% table %]</li>
+</ul>
+
+<ul class="nav nav-tabs">
+  <li><a href="[% uri_for('/list', {database => $database, table => $table}) %]">List</a></li>
+  <li class="active">
+    <a href="#">Schema</a>
+  </li>
+</ul>
 
 <pre>[% schema %]</pre>
 
