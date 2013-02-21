@@ -27,7 +27,7 @@ my $build = Module::Build->new(
     name        => 'MyAdmin',
     module_name => 'MyAdmin',
 
-    # script_files => [''],
+    script_files => ['bin/myadmin-mysql.pl'],
 
     test_files => (-d '.git' || $ENV{RELEASE_TESTING}) ? 't/ xt/' : 't/',
     recursive_test_files => 1,
