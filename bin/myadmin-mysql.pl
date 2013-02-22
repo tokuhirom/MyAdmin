@@ -33,6 +33,7 @@ my $app = MyAdmin::MySQL->to_app(
         ]
     }
 );
+print "http://127.0.0.1:$http_port/\n";
 Plack::Loader->auto(
     port => $http_port,
 )->run($app);
