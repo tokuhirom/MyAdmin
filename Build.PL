@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use Module::Build;
+use File::Copy::Recursive;
 
 my $build = Module::Build->new(
     license              => 'perl',
@@ -10,7 +11,10 @@ my $build = Module::Build->new(
         'Test::More' => '0.98',
         'Test::Requires' => 0,
     },
-    configure_requires   => { 'Module::Build' => '0.38' },
+    configure_requires   => {
+        'Module::Build' => '0.38',
+        'File::Copy::Recursive' => 0,
+    },
     requires             => {
         perl => '5.008005',
         'Amon2' => 3.27,
@@ -21,6 +25,7 @@ my $build = Module::Build->new(
         'Data::Page::NoTotalEntries'    => 0,
         'Exception::Tiny'               => 0,
         'Try::Lite' => '0.0.2',
+        'File::ShareDir' => 0,
     },
 
     no_index    => { 'directory' => [ 'inc' ] },
@@ -31,8 +36,17 @@ my $build = Module::Build->new(
 
     test_files => (-d '.git' || $ENV{RELEASE_TESTING}) ? 't/ xt/' : 't/',
     recursive_test_files => 1,
+
+    share_dir => {
+        dist => ['_share'],
+    },
    
     create_readme  => 1,
     create_license => 1,
 );
+{
+    mkdir '_share' unless -d '_share';
+    File::Copy::Recursive::rcopy('tmpl', '_share/tmpl');
+    File::Copy::Recursive::rcopy('static', '_share/static');
+}
 $build->create_build_script();

@@ -8,6 +8,7 @@ use Router::Simple::Sinatraish ();
 use Plack::App::File;
 use Text::Xslate;
 use Try::Lite;
+use File::ShareDir;
 
 sub import {
     my $class = shift;
@@ -27,6 +28,8 @@ sub import {
     Router::Simple::Sinatraish->export_to_level(1);
 
     $pkg->router->connect('/static/*', { code => \&_static }, {method => ['GET', 'HEAD']});
+
+    *{"${pkg}::resource_dir"} = \&_resource_dir;
 
     my $view = $class->_init_xslate($pkg, $args{'-xslate'});
     *{"${pkg}::create_view"} = sub { $view };
@@ -64,6 +67,15 @@ sub import {
     };
 }
 
+sub _resource_dir {
+    my ($c) = @_;
+    if (-d File::Spec->catdir($c->base_dir, 'tmpl')) {
+        return $c->base_dir;
+    } else {
+        File::ShareDir::dist_dir('MyAdmin');
+    }
+}
+
 sub _init_xslate {
     my $class = shift;
     my $pkg = shift;
@@ -78,7 +90,7 @@ sub _init_xslate {
         },
     );
     if (my $tmpl_dirname = delete $xslate_opts{tmpl_dirname}) {
-        unshift @{$xslate_args{path}}, File::Spec->catfile($pkg->base_dir(), 'tmpl/', $tmpl_dirname);
+        unshift @{$xslate_args{path}}, File::Spec->catfile($pkg->resource_dir, 'tmpl/', $tmpl_dirname);
     }
     if (my $mods = delete $xslate_opts{module}) {
         push @{$xslate_args{module}}, @$mods;
@@ -91,7 +103,7 @@ sub _init_xslate {
 
 sub _static {
     my ($c, $p) = @_;
-    my $app = Plack::App::File->new(root => 'static');
+    my $app = Plack::App::File->new(root => File::Spec->catdir($c->resource_dir(), 'static'));
     my $env = {%{$c->req->env}};
     $env->{PATH_INFO} = '/' . $p->{splat}->[0];
     my $res = $app->($env);
