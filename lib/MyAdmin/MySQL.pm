@@ -6,12 +6,30 @@ use utf8;
 use Data::Page::NoTotalEntries;
 
 use DBI;
+use DBIx::Inspector;
+use SQL::Maker;
 use MyAdmin::Exception;
+use MyAdmin::MySQL::DB;
+use JSON 2 qw(decode_json);
 
 use MyAdmin::Base -base => (
     -xslate => {
         tmpl_dirname => 'mysql',
+        module => ['JSON' => ['encode_json']],
     }
+);
+
+__PACKAGE__->add_trigger(
+    BEFORE_DISPATCH => sub {
+        my $c = shift;
+        if ($c->config->{read_only} && $c->request->method ne 'GET') {
+            return $c->render(
+                'error.tt', {
+                    message => 'This MyAdmin::MySQL instance run on read only mode.'
+                }
+            );
+        }
+    },
 );
 
 sub dbh {
@@ -19,15 +37,35 @@ sub dbh {
     $c->{dbh} ||= do {
         my @config = @{$c->config->{database}};
         $config[3]->{mysql_enable_utf8} //= 1;
-        DBI->connect(
+        $config[3]->{ShowErrorStatement} //= 1;
+        my $dbh = DBI->connect(
             @config
         ) or MyAdmin::Exception->throw($DBI::errstr);
+        $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
+        $dbh;
     };
+}
+
+sub db {
+    my $c = shift;
+    $c->{db}||= MyAdmin::MySQL::DB->new(dbh => $c->dbh);
+}
+
+sub sql_maker {
+    my $c = shift;
+    SQL::Maker->new(driver => 'mysql');
 }
 
 sub _validate {
     my $stuff = shift;
     $stuff =~ /\A[A-Za-z0-9_]+\z/ or die "Invalid name: $stuff";
+}
+
+sub column {
+    my $c = shift;
+    my $column = $c->req->param('column') // die;
+    _validate($column);
+    $column;
 }
 
 sub table {
@@ -83,40 +121,23 @@ get '/list' => sub {
     my $c = shift;
     $c->use_db();
 
-    my $table            = $c->table;
-    my $page             = 0 + ( $c->req->param('page') // 1 );
-    my $entries_per_page = 0 + 10;
-    my $offset           = ( $page - 1 ) * $entries_per_page;
-    my $sth              = $c->dbh->prepare(qq{SELECT * FROM $table LIMIT ? OFFSET ?});
-    $sth->execute($entries_per_page+1, $offset);
-    my @names = @{$sth->{NAME}};
-    my @right;
-    my @type_names = @{$sth->{mysql_type_name}};
-    for my $i (0..@names-1) {
-        $right[$i] = $sth->{mysql_type_name}->[$i] eq 'integer';
-    }
-    my @rows;
-    while (my @row = $sth->fetchrow_array()) {
-        push @rows, \@row;
-    }
-    my $has_next = 0;
-    if (@rows==$entries_per_page+1) {
-        pop @rows;
-        $has_next++;
-    }
-    my $pager = Data::Page::NoTotalEntries->new(
-        has_next => $has_next,
-        entries_per_page => $entries_per_page,
-        current_page => $page,
+    my $table = $c->table;
+    my $page = 0 + ( $c->req->param('page') // 1 );
+
+    my ($names, $rows, $pager) = $c->db->search_with_pager(
+        sprintf(qq{SELECT * FROM %s}, $c->table),
+        [],
+        $page,
+        10
     );
+
     $c->render(
         'list.tt' => {
-            names => \@names,
-            rows => \@rows,
             database => $c->database,
             table => $c->table,
-            right => \@right,
-            type_names => \@type_names,
+
+            names => $names,
+            rows => $rows,
             pager => $pager,
         },
     );
@@ -139,6 +160,65 @@ get '/schema' => sub {
     });
 };
 
+get '/insert' => sub {
+    my $c = shift;
+    $c->use_db();
+    my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
+    my $table = $inspector->table($c->table);
+    $c->render('insert.tt' => {
+        database => $c->database,
+        table    => $c->table,
+        columns  => [$table->columns->all],
+    });
+};
+
+post '/insert' => sub {
+    my $c = shift;
+    $c->use_db();
+
+    my %params;
+    for my $key (grep /^col\./, $c->req->parameters->keys) {
+        my $val = $c->req->param($key);
+        (my $column = $key) =~ s!^col\.!!;
+
+        my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
+        my $table = $inspector->table($c->table);
+        my $column_info = $table->column($column) or die "Unknown column: $column";
+        if ($column_info->get('MYSQL_IS_AUTO_INCREMENT') && $val eq '') {
+            # It's optional.
+            next;
+        }
+        $params{$column} = $val;
+    }
+    my ($sql, @binds) = $c->sql_maker->insert($c->table, \%params);
+    $c->dbh->do($sql, {}, @binds)
+        or MyAdmin::Exception->throw($c->dbh->errstr);
+    return $c->redirect($c->uri_for('/list', {database => $c->database, table => $c->table}));
+};
+
+get '/download_column' => sub {
+    my ($c) = @_;
+
+    my $column = $c->column;
+    $c->use_db();
+    my ($sql, @binds) = $c->sql_maker->select(
+        $c->table,
+        [$column],
+        decode_json($c->req->param('where')),
+    );
+    my ($value) = $c->dbh->selectrow_array(
+        $sql, {}, @binds
+    );
+    return $c->create_response(
+        200,
+        [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => "attachment; filename='$column'",
+            'Content-Length' => length($value),
+        ],
+        [$value],
+    );
+};
 
 1;
 __END__
@@ -153,4 +233,12 @@ __END__
             ]
         }
     );
+
+=head1 TODO
+
+    * csrf defender
+    * list long blobs
+    * download longblob
+    * download csv
+
 

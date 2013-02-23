@@ -15,3 +15,10 @@ footer {
 /* smart phones */
 @media screen and (max-device-width: 480px) {
 }
+
+td .null {
+    color: #cccccc;
+}
+td.numeric {
+    text-align: right;
+}

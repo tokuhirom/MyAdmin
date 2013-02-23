@@ -7,6 +7,7 @@ use 5.008005;
 use MyAdmin::MySQL;
 use Plack::Loader;
 use Getopt::Long;
+use Plack::Builder;
 
 my $http_port = 5000;
 GetOptions(
@@ -24,15 +25,19 @@ if (defined $dbhost) {
 if (defined $dbport) {
     $dsn .= "port=$dbport;";
 }
-my $app = MyAdmin::MySQL->to_app(
-    {
-        database => [
-            $dsn,
-            $username,
-            $password,
-        ]
-    }
-);
+my $app = builder {
+    enable 'AccessLog';
+
+    MyAdmin::MySQL->to_app(
+        {
+            database => [
+                $dsn,
+                $username,
+                $password,
+            ]
+        }
+    );
+};
 print "http://127.0.0.1:$http_port/\n";
 Plack::Loader->auto(
     port => $http_port,

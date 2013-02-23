@@ -26,6 +26,9 @@ my $build = Module::Build->new(
         'Exception::Tiny'               => 0,
         'Try::Lite' => '0.0.2',
         'File::ShareDir' => 0,
+        'SQL::Maker' => 0,
+        'MooX::Types::MooseLike' => 0,
+        Moo => 0,
     },
 
     no_index    => { 'directory' => [ 'inc' ] },

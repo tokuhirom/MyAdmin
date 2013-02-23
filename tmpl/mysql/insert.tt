@@ -1,0 +1,36 @@
+[% WRAPPER 'include/layout.tt' %]
+
+<ul class="breadcrumb">
+    <li><a href="[% uri_for('/') %]">Home</a> <span class="divider">/</span></li>
+    <li><a href="[% uri_for('/database', {database=>$database}) %]">[% database %]</a> <span class="divider">/</span></li>
+    <li class="active">[% table %]</li>
+</ul>
+
+<ul class="nav nav-tabs">
+  <li><a href="[% uri_for('/list', {database => $database, table => $table}) %]">List</a></li>
+  <li><a href="[% uri_for('/schema', {database => $database, table => $table}) %]">Schema</a></li>
+  <li class="active">
+    <a href="#">Insert</a>
+  </li>
+</ul>
+
+<form class="form-horizontal" action="[% uri_for('/insert') %]" method="post">
+  [% FOR col IN columns %]
+  <div class="control-group">
+    <label class="control-label" for="input[% col.name %]">[% col.name %]</label>
+    <div class="controls">
+      <input type="text" name="col.[% col.name %]" id="input[% col.name %]" placeholder="[% col.name %]">
+      <span class="help-block">[% IF col.get('MYSQL_IS_AUTO_INCREMENT') %]Optional[% END %]</span>
+    </div>
+  </div>
+  [% END %]
+  <div class="control-group">
+    <div class="controls">
+      <input type="hidden" name="database" value="[% database %]">
+      <input type="hidden" name="table" value="[% table %]">
+      <button type="submit" class="btn">Insert</button>
+    </div>
+  </div>
+</form>
+
+[% END %]

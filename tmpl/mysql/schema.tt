@@ -11,6 +11,7 @@
   <li class="active">
     <a href="#">Schema</a>
   </li>
+  <li><a href="[% uri_for('/insert', {database => $database, table => $table}) %]">Insert</a></li>
 </ul>
 
 <pre>[% schema %]</pre>

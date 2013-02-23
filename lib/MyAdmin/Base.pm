@@ -95,8 +95,8 @@ sub _init_xslate {
     if (my $mods = delete $xslate_opts{module}) {
         push @{$xslate_args{module}}, @$mods;
     }
-    if (my $functions = delete $xslate_opts{functions}) {
-        push %{$xslate_args{functions}}, %$functions;
+    if (my $function = delete $xslate_opts{function}) {
+        push %{$xslate_args{function}}, %$function;
     }
     return Text::Xslate->new(%xslate_args);
 }

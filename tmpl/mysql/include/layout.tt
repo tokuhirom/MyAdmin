@@ -4,6 +4,7 @@
 <meta charset=utf8>
 <title>MyAdmin::MySQL</title>
 <link href="[% c().uri_for('/static/bootstrap/css/bootstrap.min.css') %]" rel="stylesheet" type="text/css" />
+<link href="[% c().uri_for('/static/css/main.css') %]" rel="stylesheet" type="text/css" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!--[if lt IE 9]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>

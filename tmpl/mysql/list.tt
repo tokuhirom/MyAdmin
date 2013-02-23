@@ -11,21 +11,29 @@
     <a href="#">List</a>
   </li>
   <li><a href="[% uri_for('/schema', {database => $database, table => $table}) %]">Schema</a></li>
+  <li><a href="[% uri_for('/insert', {database => $database, table => $table}) %]">Insert</a></li>
 </ul>
 
 <table class="table table-bordered table-hover">
     <tr>
     [% FOR name IN names %]
         <th>[% name %]</th>
-        <!-- [% type_names[loop.count] %] -->
     [% END %]
-        <th>&nbsp;</th>
-        <th>&nbsp;</th>
     </tr>
 [% FOR row IN rows %]
     <tr>
-        [% FOR col IN row %]
-        <td style="[% IF right[loop.count] %]text-align:right[% END %]">[% col %]</td>
+        [% FOR col IN row.columns() %]
+        <td class="[% IF col.is_numeric() %]numeric[% END %]">
+            [% IF col.is_binary() %]
+                [% IF defined(col.value) %]
+                    <a href="[% uri_for('/download_column', {database => $database, table => $table, column => col.name(), where => encode_json(row.where())}) %]"><i class="icon-download-alt"></i>Binary</a>
+                [% ELSE %]
+                    <span class="null">(NULL)</span>
+                [% END %]
+            [% ELSE %]
+                [% col.value() %]
+            [% END %]
+        </td>
         [% END %]
     </tr>
 [% END %]
