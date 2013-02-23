@@ -14,16 +14,10 @@
   <li><a href="[% uri_for('/insert', {database => $database, table => $table}) %]">Insert</a></li>
 </ul>
 
-<table class="table table-bordered table-hover">
+<table class="table table-bordered table-hover" style="max-width: 300px">
+    [% FOR col IN row.columns() %]
     <tr>
-    [% FOR name IN names %]
-        <th>[% name %]</th>
-    [% END %]
-        <th class="delete-button-col">&nbsp;</th>
-    </tr>
-[% FOR row IN rows %]
-    <tr>
-        [% FOR col IN row.columns() %]
+        <th>[% col.name %]</th>
         <td class="[% IF col.is_numeric() %]numeric[% END %]">
             [% IF col.is_binary() %]
                 [% IF defined(col.value) %]
@@ -35,13 +29,12 @@
                 [% col.value() %]
             [% END %]
         </td>
-        [% END %]
-        <td class="delete-button-col">
-            <a href="[% uri_for('/delete', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn btn-danger"><i class="icon-trash"></i>Delete</a>
-        </td>
     </tr>
-[% END %]
+    [% END %]
 </table>
-[% INCLUDE 'include/pager.tt' WITH pager=pager %]
+
+<form method="post" action="[% uri_for('/delete', {database => $database, table => $table, where => encode_json(row.where())}) %]">
+    <button class="btn btn-danger"><i class="icon-trash"></i>Delete</button>
+</form>
 
 [% END %]

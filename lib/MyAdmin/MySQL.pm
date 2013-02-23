@@ -48,7 +48,7 @@ sub dbh {
 
 sub db {
     my $c = shift;
-    $c->{db}||= MyAdmin::MySQL::DB->new(dbh => $c->dbh);
+    $c->{db}||= MyAdmin::MySQL::DB->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
 }
 
 sub sql_maker {
@@ -201,10 +201,12 @@ get '/download_column' => sub {
 
     my $column = $c->column;
     $c->use_db();
+    my $where = decode_json(scalar $c->req->param('where'));
+    die "There is no where" unless %$where;
     my ($sql, @binds) = $c->sql_maker->select(
         $c->table,
         [$column],
-        decode_json($c->req->param('where')),
+        $where
     );
     my ($value) = $c->dbh->selectrow_array(
         $sql, {}, @binds
@@ -217,6 +219,47 @@ get '/download_column' => sub {
             'Content-Length' => length($value),
         ],
         [$value],
+    );
+};
+
+get '/delete' => sub {
+    my ($c) = @_;
+
+    $c->use_db();
+    my $where = decode_json(scalar $c->req->param('where'));
+    die "There is no where" unless %$where;
+
+    my ($row) = $c->db->single(
+        $c->table,
+        ['*'],
+        $where,
+    ) or MyAdmin::Exception->throw('Bad where.');
+    return $c->render(
+        'delete.tt' => {
+            database => $c->database,
+            table => $c->table,
+
+            row => $row,
+        },
+    );
+};
+
+post '/delete' => sub {
+    my ($c) = @_;
+
+    $c->use_db();
+    my $where = decode_json(scalar $c->req->param('where'));
+    die "There is no where" unless %$where;
+
+    $c->db->delete(
+        $c->table,
+        $where,
+    ) or MyAdmin::Exception->throw('Bad where.');
+    return $c->redirect(
+        $c->uri_for('/list', {
+            database => $c->database,
+            table => $c->table,
+        })
     );
 };
 

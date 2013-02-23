@@ -22,3 +22,7 @@ td .null {
 td.numeric {
     text-align: right;
 }
+
+.delete-button-col {
+    width: 85px;
+}
