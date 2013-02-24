@@ -29,8 +29,9 @@ sub make_rows_from_sth {
         for (my $i=0; $i<@row; $i++) {
             my $column = MyAdmin::MySQL::Column->new(
                 value           => $row[$i],
-                mysql_type_name => $sth->{mysql_type_name}->[$i],
+                type            => $sth->{TYPE}->[$i],
                 is_primary_key  => $sth->{mysql_is_pri_key}->[$i],
+                is_binary       => $self->is_binary($sth, $i),
                 name            => $sth->{NAME}->[$i],
             );
             push @columns, $column;
@@ -42,7 +43,35 @@ sub make_rows_from_sth {
     return @rows;
 }
 
+sub is_binary {
+    my ($self, $sth, $i) = @_;
+    return $sth->{mysql_type_name}->[$i] =~ /\A(?:blob|longblob)\z/ ? 1 : 0;
+}
+
+sub insert {
+    my ($self, $table, $params) = @_;
+    my ($sql, @binds) = $self->sql_maker->insert($table, $params);
+    $self->dbh->do($sql, {}, @binds);
+}
+
 sub search_with_pager {
+    my ($self, $table, $columns, $where, $page, $entries_per_page) = @_;
+
+    my ($sql, @binds) = $self->sql_maker->select(
+        $table,
+        $columns,
+        $where
+    );
+    my ($names, $rows, $pager) = $self->search_by_sql_with_pager(
+        $sql,
+        [@binds],
+        $page,
+        10
+    );
+    return ($names, $rows, $pager);
+}
+
+sub search_by_sql_with_pager {
     my ($self, $sql, $binds, $page, $entries_per_page) = @_;
 
     my $offset           = ( $page - 1 ) * $entries_per_page;

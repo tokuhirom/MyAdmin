@@ -18,9 +18,15 @@ has value => (
     required => 1,
 );
 
-has mysql_type_name => (
+has type => (
     is => 'ro',
     isa => Str,
+    required => 1,
+);
+
+has is_binary => (
+    is => 'ro',
+    isa => Bool,
     required => 1,
 );
 
@@ -34,12 +40,7 @@ no Moo;
 
 sub is_numeric {
     my $self = shift;
-    return $self->mysql_type_name eq 'integer';
-}
-
-sub is_binary {
-    my $self = shift;
-    return $self->mysql_type_name =~ /\A(?:blob|longblob)\z/;
+    return $self->type eq DBI::SQL_INTEGER() || $self->type eq DBI::SQL_DECIMAL;
 }
 
 1;

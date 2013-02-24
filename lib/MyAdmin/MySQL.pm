@@ -153,18 +153,14 @@ get '/list' => sub {
     my $page = 0 + ( $c->req->param('page') || 1 );
 
     my $column_values = $c->column_values;
-    my ($sql, @binds) = $c->sql_maker->select(
+    my ($names, $rows, $pager) = $c->db->search_with_pager(
         $c->table,
         ['*'],
         +{
             map { $_ => $column_values->{$_} }
             grep { length($column_values->{$_}) > 0 }
             keys %$column_values
-        }
-    );
-    my ($names, $rows, $pager) = $c->db->search_with_pager(
-        $sql,
-        [@binds],
+        },
         $page,
         10
     );
@@ -218,13 +214,14 @@ post '/insert' => sub {
     my $c = shift;
     $c->use_db();
 
+    my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
+    my $table = $inspector->table($c->table);
+
     my %params;
     for my $key (grep /^col\./, $c->req->parameters->keys) {
         my $val = $c->req->param($key);
         (my $column = $key) =~ s!^col\.!!;
 
-        my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
-        my $table = $inspector->table($c->table);
         my $column_info = $table->column($column) or die "Unknown column: $column";
         if ($column_info->get('MYSQL_IS_AUTO_INCREMENT') && $val eq '') {
             # It's optional.
@@ -232,10 +229,14 @@ post '/insert' => sub {
         }
         $params{$column} = $val;
     }
-    my ($sql, @binds) = $c->sql_maker->insert($c->table, \%params);
-    $c->dbh->do($sql, {}, @binds)
-        or MyAdmin::Exception->throw($c->dbh->errstr);
-    return $c->redirect($c->uri_for('/list', {database => $c->database, table => $c->table}));
+    $c->db->insert($c->table, \%params);
+
+    return $c->redirect(
+        $c->uri_for( '/list', {
+            database => $c->database,
+            table => $c->table
+        } )
+    );
 };
 
 get '/download_column' => sub {
@@ -249,6 +250,7 @@ get '/download_column' => sub {
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');
     my $value = $row->column($column)->value;
+
     return $c->create_response(
         200,
         [
