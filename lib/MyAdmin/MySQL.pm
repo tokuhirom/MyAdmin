@@ -336,16 +336,27 @@ post '/delete' => sub {
 1;
 __END__
 
+=head1 NAME
+
+MyAdmin::MySQL - MySQL admin site PSGI app
+
 =head1 SYNOPSIS
 
-    mount '/schwartz/' => MyAdmin::MySQL->to_app(
-        +{
-            database => [
-                'dbi:mysql:...',
-                'root',
-            ]
-        }
-    );
+    builder {
+        mount '/mysql/' => MyAdmin::MySQL->to_app(
+            +{
+                database => [
+                    'dbi:mysql:...',
+                    'root',
+                    'pa55word',
+                ]
+            }
+        );
+    };
+
+=head1 DESCRIPTION
+
+This is a admin site L<PSGI> app for management mysql.
 
 =head1 TODO
 

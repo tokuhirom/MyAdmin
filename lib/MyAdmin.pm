@@ -4,8 +4,6 @@ use warnings;
 use 5.008005;
 our $VERSION = '0.0.1';
 
-
-
 1;
 __END__
 
@@ -13,15 +11,11 @@ __END__
 
 =head1 NAME
 
-MyAdmin - ...
-
-=head1 SYNOPSIS
-
-  use MyAdmin;
+MyAdmin - My admin site
 
 =head1 DESCRIPTION
 
-MyAdmin is
+MyAdmin is a set of common admin site set.
 
 B<THIS IS A DEVELOPMENT RELEASE. API MAY CHANGE WITHOUT NOTICE>.
 
