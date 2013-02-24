@@ -323,7 +323,7 @@ post '/delete' => sub {
 
     $c->use_db();
 
-    $c->db->delete(
+    $c->db->delete_row(
         $c->table,
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');
