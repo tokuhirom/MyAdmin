@@ -12,3 +12,9 @@ requires 'MooX::Types::MooseLike' => 0;
 requires Moo => 0;
 requires 'DBIx::Inspector' => 0.09;
 requires 'JSON' => 2;
+requires 'CPAN';
+requires 'DBD::mysql';
+
+on test => sub {
+    requires 'Test::More' => 0.98;
+};
