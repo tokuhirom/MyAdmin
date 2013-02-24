@@ -99,8 +99,7 @@ use MyAdmin::Accessor::LazyRO (
 
         # check this where clause just select one row.
         $c->use_db();
-        my ($sql, @binds) = $c->sql_maker->select($c->table, [\'COUNT(*)'], $where);
-        my ($cnt) = $c->dbh->selectrow_array($sql, {}, @binds);
+        my $cnt = $c->db->count($c->table, [\'COUNT(*)'], $where);
         $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
 
         # okay, it's valid.
@@ -123,13 +122,8 @@ sub use_db {
 get '/' => sub {
     my $c = shift;
 
-    my $dbh = $c->dbh;
-    my @databases = map { @$_ } @{
-        $dbh->selectall_arrayref(q{SHOW DATABASES});
-    };
-
     $c->render('index.tt' => {
-        databases => \@databases,
+        databases => [$c->db->databases],
     });
 };
 
