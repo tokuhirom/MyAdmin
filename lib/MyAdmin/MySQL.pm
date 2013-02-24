@@ -60,10 +60,6 @@ use MyAdmin::Accessor::LazyRO (
         my $c = shift;
         Garua->new(dbh => $c->dbh);
     },
-    sql_maker => sub {
-        my $c = shift;
-        $c->db->sql_maker;
-    },
     column => sub {
         my $c = shift;
         my $column = $c->req->param('column') || die;
