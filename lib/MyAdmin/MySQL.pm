@@ -36,8 +36,8 @@ use MyAdmin::Accessor::LazyRO (
     dbh => sub {
         my $c = shift;
         my @config = @{$c->config->{database}};
-        $config[3]->{mysql_enable_utf8} //= 1;
-        $config[3]->{ShowErrorStatement} //= 1;
+        $config[3]->{mysql_enable_utf8} ||= 1;
+        $config[3]->{ShowErrorStatement} ||= 1;
         $config[3]->{RaiseError} = 1;
         my $dbh = DBI->connect(
             @config
@@ -58,19 +58,19 @@ use MyAdmin::Accessor::LazyRO (
     },
     column => sub {
         my $c = shift;
-        my $column = $c->req->param('column') // die;
+        my $column = $c->req->param('column') || die;
         _validate($column);
         $column;
     },
     table => sub {
         my $c = shift;
-        my $table = $c->req->param('table') // die;
+        my $table = $c->req->param('table') || die;
         _validate($table);
         $table;
     },
     database => sub {
         my $c = shift;
-        my $database = $c->req->param('database') // die;
+        my $database = $c->req->param('database') || die;
         _validate($database);
         $database;
     },
@@ -136,7 +136,7 @@ get '/list' => sub {
     $c->use_db();
 
     my $table = $c->table;
-    my $page = 0 + ( $c->req->param('page') // 1 );
+    my $page = 0 + ( $c->req->param('page') || 1 );
 
     my ($names, $rows, $pager) = $c->db->search_with_pager(
         sprintf(qq{SELECT * FROM %s}, $c->table),
