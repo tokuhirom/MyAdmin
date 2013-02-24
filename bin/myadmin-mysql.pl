@@ -27,6 +27,7 @@ if (defined $dbport) {
 }
 my $app = builder {
     enable 'AccessLog';
+    enable 'Session';
 
     MyAdmin::MySQL->to_app(
         {

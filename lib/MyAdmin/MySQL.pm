@@ -12,6 +12,10 @@ use MyAdmin::Exception;
 use MyAdmin::MySQL::DB;
 use JSON 2 qw(decode_json);
 
+__PACKAGE__->load_plugin('Web::CSRFDefender' => {
+    post_only => 1,
+});
+
 use MyAdmin::Base -base => (
     -xslate => {
         tmpl_dirname => 'mysql',
@@ -345,6 +349,5 @@ __END__
 
 =head1 TODO
 
-    * csrf defender
     * download data by csv
 
