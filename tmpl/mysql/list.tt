@@ -41,7 +41,7 @@
     </tr>
 [% FOR row IN rows %]
     <tr>
-        [% FOR col IN row.columns() %]
+        [% FOR col IN row.get_column_objects() %]
         <td class="[% IF col.is_numeric() %]numeric[% END %]">
             [% IF col.is_binary() %]
                 [% IF defined(col.value) %]
@@ -54,12 +54,21 @@
             [% END %]
         </td>
         [% END %]
-        <td class="update-button-col">
-            <a href="[% uri_for('/update', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn"><i class="icon-edit"></i>Update</a>
-        </td>
-        <td class="delete-button-col">
-            <a href="[% uri_for('/delete', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn btn-danger"><i class="icon-trash"></i>Delete</a>
-        </td>
+        [% IF row.where() %]
+            <td class="update-button-col">
+                <a href="[% uri_for('/update', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn"><i class="icon-edit"></i>Update</a>
+            </td>
+            <td class="delete-button-col">
+                <a href="[% uri_for('/delete', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn btn-danger"><i class="icon-trash"></i>Delete</a>
+            </td>
+        [% ELSE %]
+            <td class="update-button-col">
+                <span class="no-pk">(No PK)</span>
+            </td>
+            <td class="delete-button-col">
+                <span class="no-pk">(No PK)</span>
+            </td>
+        [% END %]
     </tr>
 [% END %]
 </table>

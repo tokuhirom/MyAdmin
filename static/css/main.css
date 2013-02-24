@@ -16,6 +16,10 @@ footer {
 @media screen and (max-device-width: 480px) {
 }
 
+.no-pk {
+    color: #cccccc;
+}
+
 td .null {
     color: #cccccc;
 }

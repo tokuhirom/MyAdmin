@@ -15,7 +15,7 @@
 </ul>
 
 <form method="post" action="[% uri_for('/update') %]" class="form-horizontal">
-    [% FOR col IN row.columns() %]
+    [% FOR col IN row.get_column_objects() %]
   <div class="control-group">
     <label class="control-label" for="input[% col.name %]">[% col.name %]</label>
     <div class="controls">
