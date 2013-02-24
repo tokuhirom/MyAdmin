@@ -1,4 +1,4 @@
-package MyAdmin::MySQL::Column;
+package Garua::Column;
 use strict;
 use warnings;
 use utf8;

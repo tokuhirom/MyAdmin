@@ -1,10 +1,10 @@
-package MyAdmin::MySQL::DB;
+package Garua::Driver::mysql;
 use strict;
 use warnings;
 use utf8;
 
-use MyAdmin::MySQL::Column;
-use MyAdmin::MySQL::Row;
+use Garua::Column;
+use Garua::Row;
 
 use Moo;
 
@@ -27,7 +27,7 @@ sub make_rows_from_sth {
     while (my @row = $sth->fetchrow_array()) {
         my @columns;
         for (my $i=0; $i<@row; $i++) {
-            my $column = MyAdmin::MySQL::Column->new(
+            my $column = Garua::Column->new(
                 value           => $row[$i],
                 type            => $sth->{TYPE}->[$i],
                 is_primary_key  => $sth->{mysql_is_pri_key}->[$i],
@@ -36,7 +36,7 @@ sub make_rows_from_sth {
             );
             push @columns, $column;
         }
-        push @rows, MyAdmin::MySQL::Row->new(
+        push @rows, Garua::Row->new(
             columns => \@columns,
         );
     }
@@ -77,8 +77,7 @@ sub search_by_sql_with_pager {
     my $offset           = ( $page - 1 ) * $entries_per_page;
 
     my $sth = $self->dbh->prepare($sql . q{ LIMIT ? OFFSET ?});
-    $sth->execute(@$binds, $entries_per_page+1, $offset)
-        or MyAdmin::Exception->throw($self->dbh->errstr);
+    $sth->execute(@$binds, $entries_per_page+1, $offset);
 
     my @names = @{$sth->{NAME}};
 
@@ -90,9 +89,9 @@ sub search_by_sql_with_pager {
         $has_next++;
     }
     my $pager = Data::Page::NoTotalEntries->new(
-        has_next => $has_next,
+        has_next         => $has_next,
         entries_per_page => $entries_per_page,
-        current_page => $page,
+        current_page     => $page,
     );
 
     return (\@names, \@rows, $pager);
@@ -111,13 +110,23 @@ sub single {
     my $sth = $self->dbh->prepare(
         $sql
     );
-    $sth->execute(@binds) or MyAdmin::Exception->throw($self->dbh->errstr);
+    $sth->execute(@binds);
     my @rows = $self->make_rows_from_sth($sth);
     die "Bad where($sql) : " . (0+@rows) if @rows > 1;
     return @rows;
 }
 
-sub delete_row {
+sub schema {
+    my ($self, $table) = @_;
+    my ($schema) = map { $_->[1] } @{
+        $self->dbh->selectall_arrayref(
+            sprintf(qq{SHOW CREATE TABLE %s}, $self->dbh->quote_identifier($table)),
+        );
+    };
+    return $schema;
+}
+
+sub delete {
     my ($self, $table, $where) = @_;
 
     die "Bad where" unless %$where;
@@ -129,7 +138,7 @@ sub delete_row {
     my $sth = $self->dbh->prepare(
         $sql
     );
-    $sth->execute(@binds) or MyAdmin::Exception->throw($self->dbh->errstr);
+    $sth->execute(@binds);
 }
 
 1;

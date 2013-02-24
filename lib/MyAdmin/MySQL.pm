@@ -7,9 +7,9 @@ use Data::Page::NoTotalEntries;
 
 use DBI;
 use DBIx::Inspector;
+use Garua;
 use SQL::Maker;
 use MyAdmin::Exception;
-use MyAdmin::MySQL::DB;
 use JSON 2 qw(decode_json);
 
 __PACKAGE__->load_plugin('Web::CSRFDefender' => {
@@ -58,7 +58,7 @@ use MyAdmin::Accessor::LazyRO (
     },
     db => sub {
         my $c = shift;
-        MyAdmin::MySQL::DB->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
+        Garua->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
     },
     sql_maker => sub {
         my $c = shift;
@@ -186,23 +186,20 @@ get '/schema' => sub {
 
     $c->use_db();
 
-    my $table = $c->table;
-    my ($schema) = map { $_->[1] } @{
-        $c->dbh->selectall_arrayref(qq{SHOW CREATE TABLE $table});
-    };
+    my $schema = $c->db->schema($c->table);
 
     $c->render('schema.tt' => {
-        database => scalar($c->req->param('database')),
-        table => $table,
-        schema => $schema,
+        database => $c->database,
+        table    => $c->table,
+
+        schema   => $schema,
     });
 };
 
 get '/insert' => sub {
     my $c = shift;
     $c->use_db();
-    my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
-    my $table = $inspector->table($c->table);
+    my $table = $c->inspector->table($c->table);
     $c->render('insert.tt' => {
         database => $c->database,
         table    => $c->table,
@@ -214,14 +211,12 @@ post '/insert' => sub {
     my $c = shift;
     $c->use_db();
 
-    my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
-    my $table = $inspector->table($c->table);
+    my $table = $c->inspector->table($c->table);
+
+    my $column_values = $c->column_values;
 
     my %params;
-    for my $key (grep /^col\./, $c->req->parameters->keys) {
-        my $val = $c->req->param($key);
-        (my $column = $key) =~ s!^col\.!!;
-
+    while (my ($column, $val) = each %$column_values) {
         my $column_info = $table->column($column) or die "Unknown column: $column";
         if ($column_info->get('MYSQL_IS_AUTO_INCREMENT') && $val eq '') {
             # It's optional.
@@ -285,18 +280,18 @@ post '/update' => sub {
     my $c = shift;
     $c->use_db();
 
-    my %params;
-    for my $key (grep /^col\./, $c->req->parameters->keys) {
-        my $val = $c->req->param($key);
-        (my $column = $key) =~ s!^col\.!!;
-
-        my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
-        my $table = $inspector->table($c->table);
-        $params{$column} = $val;
-    }
-    my ($sql, @binds) = $c->sql_maker->update($c->table, \%params, $c->where);
+    my ($sql, @binds) = $c->sql_maker->update(
+        $c->table,
+        $c->column_values,
+        $c->where
+    );
     $c->dbh->do($sql, {}, @binds);
-    return $c->redirect($c->uri_for('/list', {database => $c->database, table => $c->table}));
+    return $c->redirect(
+        $c->uri_for('/list', {
+            database => $c->database,
+            table => $c->table
+        })
+    );
 };
 
 get '/delete' => sub {
@@ -323,7 +318,7 @@ post '/delete' => sub {
 
     $c->use_db();
 
-    $c->db->delete_row(
+    $c->db->delete(
         $c->table,
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');
