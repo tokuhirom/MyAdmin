@@ -48,6 +48,10 @@ use MyAdmin::Accessor::LazyRO (
         $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
         $dbh;
     },
+    inspector => sub {
+        my $c = shift;
+        DBIx::Inspector->new(dbh => $c->dbh);
+    },
     db => sub {
         my $c = shift;
         MyAdmin::MySQL::DB->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
@@ -121,9 +125,7 @@ get '/database' => sub {
 
     my $dbh = $c->dbh;
     $c->use_db();
-    my @tables = map { @$_ } @{
-        $c->dbh->selectall_arrayref(q{SHOW TABLES});
-    };
+    my @tables = $c->inspector->tables;
 
     $c->render('database.tt' => {
         database => $c->database,
