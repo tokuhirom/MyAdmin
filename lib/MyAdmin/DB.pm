@@ -1,4 +1,4 @@
-package MyAdmin::MySQL;
+package MyAdmin::DB;
 use strict;
 use warnings;
 use utf8;
@@ -31,9 +31,18 @@ __PACKAGE__->add_trigger(
         if ($c->config->{read_only} && $c->request->method ne 'GET') {
             return $c->render(
                 'error.tt', {
-                    message => 'This MyAdmin::MySQL instance run on read only mode.'
+                    exception => MyAdmin::Exception->new(message => 'This MyAdmin::DB instance run on read only mode.')
                 }
             );
+        }
+    },
+);
+
+__PACKAGE__->add_trigger(
+    BEFORE_DISPATCH => sub {
+        my $self = shift;
+        if ($self->req->param('database')) {
+            $self->use_db($self->database);
         }
     },
 );
@@ -144,15 +153,6 @@ get '/' => sub {
         databases => [$c->teng->databases],
     });
 };
-
-__PACKAGE__->add_trigger(
-    BEFORE_DISPATCH => sub {
-        my $self = shift;
-        if ($self->req->param('database')) {
-            $self->use_db($self->database);
-        }
-    },
-);
 
 get '/database' => sub {
     my $c = shift;
