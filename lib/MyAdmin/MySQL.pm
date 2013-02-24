@@ -71,56 +71,59 @@ sub _build_dbh {
 }
 
 use Class::Accessor::Lite::Lazy (
-    ro_lazy => [qw(dbh teng)],
+    ro_lazy => [qw(dbh teng inspector column column_values where database table)],
 );
 
-use MyAdmin::Accessor::LazyRO (
-    inspector => sub {
-        my $c = shift;
-        DBIx::Inspector->new(dbh => $c->dbh);
-    },
-    column => sub {
-        my $c = shift;
-        my $column = $c->req->param('column') || die;
-        _validate($column);
-        $column;
-    },
-    column_values => sub {
-        my $c = shift;
-        my %columns;
-        for my $key (grep /^col\./, $c->req->parameters->keys) {
-            my $val = $c->req->param($key);
-            (my $column = $key) =~ s!^col\.!!;
-            $columns{$column} = $val;
-        }
-        return \%columns;
-    },
-    table => sub {
-        my $c = shift;
-        my $table = $c->req->param('table') || die;
-        _validate($table);
-        $table;
-    },
-    database => sub {
-        my $c = shift;
-        my $database = $c->req->param('database') || die;
-        _validate($database);
-        $database;
-    },
-    where => sub {
-        my $c = shift;
-        my $where = decode_json(scalar $c->req->param('where'));
-        die "There is no where" unless %$where;
+sub _build_inspector {
+    my $c = shift;
+    DBIx::Inspector->new(dbh => $c->dbh);
+}
 
-        # check this where clause just select one row.
-        $c->use_db();
-        my $cnt = $c->teng->count($c->table, '*', $where);
-        $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
+sub _build_column {
+    my $c = shift;
+    my $column = $c->req->param('column') || die;
+    _validate($column);
+    $column;
+}
 
-        # okay, it's valid.
-        $where;
-    },
-);
+sub _build_column_values {
+    my $c = shift;
+    my %columns;
+    for my $key (grep /^col\./, $c->req->parameters->keys) {
+        my $val = $c->req->param($key);
+        (my $column = $key) =~ s!^col\.!!;
+        $columns{$column} = $val;
+    }
+    return \%columns;
+}
+
+sub _build_table {
+    my $c = shift;
+    my $table = $c->req->param('table') || die;
+    _validate($table);
+    $table;
+}
+
+sub _build_database {
+    my $c = shift;
+    my $database = $c->req->param('database') || die;
+    _validate($database);
+    $database;
+}
+
+sub _build_where {
+    my $c = shift;
+    my $where = decode_json(scalar $c->req->param('where'));
+    die "There is no where" unless %$where;
+
+    # check this where clause just select one row.
+    $c->use_db();
+    my $cnt = $c->teng->count($c->table, '*', $where);
+    $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
+
+    # okay, it's valid.
+    $where;
+}
 
 
 sub _validate {
