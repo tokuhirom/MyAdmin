@@ -23,6 +23,9 @@ td.numeric {
     text-align: right;
 }
 
+.update-button-col {
+    width: 90px;
+}
 .delete-button-col {
     width: 85px;
 }

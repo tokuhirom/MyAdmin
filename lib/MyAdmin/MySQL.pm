@@ -32,9 +32,9 @@ __PACKAGE__->add_trigger(
     },
 );
 
-sub dbh {
-    my $c = shift;
-    $c->{dbh} ||= do {
+use MyAdmin::Accessor::LazyRO (
+    dbh => sub {
+        my $c = shift;
         my @config = @{$c->config->{database}};
         $config[3]->{mysql_enable_utf8} //= 1;
         $config[3]->{ShowErrorStatement} //= 1;
@@ -47,50 +47,53 @@ sub dbh {
         };
         $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
         $dbh;
-    };
-}
+    },
+    db => sub {
+        my $c = shift;
+        MyAdmin::MySQL::DB->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
+    },
+    sql_maker => sub {
+        my $c = shift;
+        SQL::Maker->new(driver => 'mysql');
+    },
+    column => sub {
+        my $c = shift;
+        my $column = $c->req->param('column') // die;
+        _validate($column);
+        $column;
+    },
+    table => sub {
+        my $c = shift;
+        my $table = $c->req->param('table') // die;
+        _validate($table);
+        $table;
+    },
+    database => sub {
+        my $c = shift;
+        my $database = $c->req->param('database') // die;
+        _validate($database);
+        $database;
+    },
+    where => sub {
+        my $c = shift;
+        my $where = decode_json(scalar $c->req->param('where'));
+        die "There is no where" unless %$where;
 
-sub db {
-    my $c = shift;
-    $c->{db}||= MyAdmin::MySQL::DB->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
-}
+        # check this where clause just select one row.
+        $c->use_db();
+        my ($sql, @binds) = $c->sql_maker->select($c->table, [\'COUNT(*)'], $where);
+        my ($cnt) = $c->dbh->selectrow_array($sql, {}, @binds);
+        $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
 
-sub sql_maker {
-    my $c = shift;
-    SQL::Maker->new(driver => 'mysql');
-}
+        # okay, it's valid.
+        $where;
+    },
+);
+
 
 sub _validate {
     my $stuff = shift;
     $stuff =~ /\A[A-Za-z0-9_]+\z/ or die "Invalid name: $stuff";
-}
-
-sub column {
-    my $c = shift;
-    my $column = $c->req->param('column') // die;
-    _validate($column);
-    $column;
-}
-
-sub table {
-    my $c = shift;
-    my $table = $c->req->param('table') // die;
-    _validate($table);
-    $table;
-}
-
-sub database {
-    my $c = shift;
-    my $database = $c->req->param('database') // die;
-    _validate($database);
-    $database;
-}
-
-sub where {
-    my $c = shift;
-    my $where = decode_json(scalar $c->req->param('where'));
-    die "There is no where" unless %$where;
-    $where;
 }
 
 sub use_db {
@@ -229,6 +232,43 @@ get '/download_column' => sub {
     );
 };
 
+get '/update' => sub {
+    my ($c) = @_;
+
+    $c->use_db();
+    my ($row) = $c->db->single(
+        $c->table,
+        ['*'],
+        $c->where,
+    ) or MyAdmin::Exception->throw('Bad where.');
+    return $c->render(
+        'update.tt' => {
+            database => $c->database,
+            table => $c->table,
+
+            row => $row,
+        },
+    );
+};
+
+post '/update' => sub {
+    my $c = shift;
+    $c->use_db();
+
+    my %params;
+    for my $key (grep /^col\./, $c->req->parameters->keys) {
+        my $val = $c->req->param($key);
+        (my $column = $key) =~ s!^col\.!!;
+
+        my $inspector = DBIx::Inspector->new(dbh => $c->dbh);
+        my $table = $inspector->table($c->table);
+        $params{$column} = $val;
+    }
+    my ($sql, @binds) = $c->sql_maker->update($c->table, \%params, $c->where);
+    $c->dbh->do($sql, {}, @binds);
+    return $c->redirect($c->uri_for('/list', {database => $c->database, table => $c->table}));
+};
+
 get '/delete' => sub {
     my ($c) = @_;
 
@@ -282,8 +322,6 @@ __END__
 =head1 TODO
 
     * csrf defender
-    * list long blobs
-    * download longblob
-    * download csv
-
+    * download data by csv
+    * search data by where.
 

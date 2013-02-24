@@ -36,6 +36,9 @@
             [% END %]
         </td>
         [% END %]
+        <td class="update-button-col">
+            <a href="[% uri_for('/update', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn"><i class="icon-edit"></i>Update</a>
+        </td>
         <td class="delete-button-col">
             <a href="[% uri_for('/delete', {database => $database, table => $table, where => encode_json(row.where())}) %]" class="btn btn-danger"><i class="icon-trash"></i>Delete</a>
         </td>
