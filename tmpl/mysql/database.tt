@@ -14,8 +14,8 @@
 [% FOR table IN tables %]
     <tr>
         <td>[% table.name %]</td>
-        <td><a href="[% uri_for('/list', {database => $database, table => $table}) %]">List of contents</a></td>
-        <td><a href="[% uri_for('/schema', {database => $database, table => $table}) %]">Schema</a></td>
+        <td><a href="[% uri_for('/list', {database => $database, table => $table.name}) %]">List of contents</a></td>
+        <td><a href="[% uri_for('/schema', {database => $database, table => $table.name}) %]">Schema</a></td>
     </tr>
 [% END %]
 </table>

@@ -103,8 +103,7 @@ sub _validate {
 sub use_db {
     my $c = shift;
 
-    my $database = $c->database;
-    $c->dbh->do(qq{USE $database});
+    $c->dbh->do(sprintf(qq{USE %s}, $c->dbh->quote_identifier($c->database)));
 }
 
 get '/' => sub {
