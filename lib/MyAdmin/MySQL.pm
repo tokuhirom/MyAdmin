@@ -58,11 +58,11 @@ use MyAdmin::Accessor::LazyRO (
     },
     db => sub {
         my $c = shift;
-        Garua->new(dbh => $c->dbh, sql_maker => $c->sql_maker);
+        Garua->new(dbh => $c->dbh);
     },
     sql_maker => sub {
         my $c = shift;
-        SQL::Maker->new(driver => 'mysql');
+        $c->db->sql_maker;
     },
     column => sub {
         my $c = shift;
@@ -278,14 +278,13 @@ get '/update' => sub {
 
 post '/update' => sub {
     my $c = shift;
-    $c->use_db();
 
-    my ($sql, @binds) = $c->sql_maker->update(
+    $c->use_db();
+    $c->db->update(
         $c->table,
         $c->column_values,
         $c->where
     );
-    $c->dbh->do($sql, {}, @binds);
     return $c->redirect(
         $c->uri_for('/list', {
             database => $c->database,

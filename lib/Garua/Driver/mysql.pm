@@ -16,6 +16,11 @@ has dbh => (
 has sql_maker => (
     is => 'ro',
     required => 1,
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        SQL::Maker->new(driver => $self->dbh->{Driver}->{Name});
+    },
 );
 
 no Moo;
@@ -124,6 +129,17 @@ sub schema {
         );
     };
     return $schema;
+}
+
+sub update {
+    my ($self, $table, $set, $where) = @_;
+
+    my ($sql, @binds) = $self->sql_maker->update(
+        $table,
+        $set,
+        $where
+    );
+    $self->dbh->do($sql, {}, @binds);
 }
 
 sub delete {
