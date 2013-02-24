@@ -14,6 +14,12 @@ has columns => (
 
 no Moo;
 
+sub column {
+    my ($self, $column) = @_;
+    my ($col) = grep { $_->name eq $column } @{$self->columns};
+    return $col;
+}
+
 sub where {
     my $self = shift;
 

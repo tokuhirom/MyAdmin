@@ -88,7 +88,7 @@ sub single {
     return @rows;
 }
 
-sub delete {
+sub delete_row {
     my ($self, $table, $where) = @_;
 
     die "Bad where" unless %$where;
