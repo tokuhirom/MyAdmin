@@ -14,6 +14,24 @@
   <li><a href="[% uri_for('/insert', {database => $database, table => $table}) %]">Insert</a></li>
 </ul>
 
+<form class="form-horizontal" action="[% uri_for('/list') %]" method="get">
+  [% FOR col IN columns %]
+  <div class="control-group">
+    <label class="control-label" for="input[% col.name %]">[% col.name %]</label>
+    <div class="controls">
+      <input type="text" name="col.[% col.name %]" id="input[% col.name %]" placeholder="[% col.name %]" value="[% c().req.param('col.' _ col.name) %]">
+    </div>
+  </div>
+  [% END %]
+  <div class="control-group">
+    <div class="controls">
+      <input type="hidden" name="database" value="[% database %]">
+      <input type="hidden" name="table" value="[% table %]">
+      <button type="submit" class="btn"><i class="icon-search"></i> Search</button>
+    </div>
+  </div>
+</form>
+
 <table class="table table-bordered table-hover">
     <tr>
     [% FOR name IN names %]

@@ -66,6 +66,16 @@ use MyAdmin::Accessor::LazyRO (
         _validate($column);
         $column;
     },
+    column_values => sub {
+        my $c = shift;
+        my %columns;
+        for my $key (grep /^col\./, $c->req->parameters->keys) {
+            my $val = $c->req->param($key);
+            (my $column = $key) =~ s!^col\.!!;
+            $columns{$column} = $val;
+        }
+        return \%columns;
+    },
     table => sub {
         my $c = shift;
         my $table = $c->req->param('table') || die;
@@ -136,20 +146,33 @@ get '/list' => sub {
     my $c = shift;
     $c->use_db();
 
-    my $table = $c->table;
     my $page = 0 + ( $c->req->param('page') || 1 );
 
+    my $column_values = $c->column_values;
+    my ($sql, @binds) = $c->sql_maker->select(
+        $c->table,
+        ['*'],
+        +{
+            map { $_ => $column_values->{$_} }
+            grep { length($column_values->{$_}) > 0 }
+            keys %$column_values
+        }
+    );
     my ($names, $rows, $pager) = $c->db->search_with_pager(
-        sprintf(qq{SELECT * FROM %s}, $c->table),
-        [],
+        $sql,
+        [@binds],
         $page,
         10
     );
+
+    my $table = $c->inspector->table($c->table);
 
     $c->render(
         'list.tt' => {
             database => $c->database,
             table => $c->table,
+
+            columns  => [$table->columns->all],
 
             names => $names,
             rows => $rows,
@@ -324,5 +347,4 @@ __END__
 
     * csrf defender
     * download data by csv
-    * search data by where.
 
