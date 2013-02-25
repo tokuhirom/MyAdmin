@@ -10,11 +10,18 @@ __PACKAGE__->load_plugin(qw(Count));
 
 sub databases {
     my $self = shift;
-    # XXX This is not portable.
-    my @databases = map { @$_ } @{
-        $self->dbh->selectall_arrayref(q{SHOW DATABASES});
-    };
-    return @databases;
+
+    my $driver = $self->dbh->{Driver}->{Name};
+    if ($driver eq 'mysql') {
+        my @databases = map { @$_ } @{
+            $self->dbh->selectall_arrayref(q{SHOW DATABASES});
+        };
+        return @databases;
+    } elsif ($driver eq 'SQLite') {
+        return 'main';
+    } else {
+        die "This method is not supported for $driver";
+    }
 }
 
 sub get_schema_sql {

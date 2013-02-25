@@ -20,6 +20,7 @@ requires 'Carp::Always';
 requires 'Class::Accessor::Lite::Lazy';
 
 requires 'DBIx::QueryLog';
+requires 'DBD::SQLite';
 
 on test => sub {
     requires 'Test::More' => 0.98;

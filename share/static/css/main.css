@@ -27,6 +27,14 @@ td.numeric {
     text-align: right;
 }
 
+td {
+    max-height: 100px;
+    max-width:100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .update-button-col {
     width: 90px;
 }

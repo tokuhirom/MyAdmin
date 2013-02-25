@@ -75,7 +75,9 @@ sub _build_dbh {
         use Carp; Carp::cluck($_[0]);
         MyAdmin::Exception->throw($_[0])
     };
-    $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
+    if ($dbh->{Driver}->{Name} eq 'mysql') {
+        $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
+    }
     $dbh;
 }
 
@@ -143,7 +145,14 @@ sub _validate {
 sub use_db {
     my $c = shift;
 
-    $c->dbh->do(sprintf(qq{USE %s}, $c->dbh->quote_identifier($c->database)));
+    my $driver = $c->dbh->{Driver}->{Name};
+    if ($driver eq 'mysql') {
+        $c->dbh->do(sprintf(qq{USE %s}, $c->dbh->quote_identifier($c->database)));
+    } elsif ($driver eq 'SQLite') {
+        # nop
+    } else {
+        die "This method is not supported for $driver";
+    }
 }
 
 get '/' => sub {
