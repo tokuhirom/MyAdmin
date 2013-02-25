@@ -69,8 +69,8 @@ sub import {
 
 sub _resource_dir {
     my ($c) = @_;
-    if (-d File::Spec->catdir($c->base_dir, 'tmpl')) {
-        return $c->base_dir;
+    if (-d File::Spec->catdir($c->base_dir, 'share')) {
+        return File::Spec->catdir($c->base_dir, 'share');
     } else {
         File::ShareDir::dist_dir('MyAdmin');
     }
