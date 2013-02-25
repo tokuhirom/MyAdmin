@@ -28,13 +28,26 @@ sub get_schema_sql {
     my ($self, $table) = @_;
     defined($table) or die;
 
-    # XXX This is not portable, too.
-    my ($schema) = map { $_->[1] } @{
-        $self->dbh->selectall_arrayref(
-            sprintf(qq{SHOW CREATE TABLE %s}, $self->dbh->quote_identifier($table)),
+    # TODO I should move this feature to DBIx::Inspector.
+    my $driver = $self->dbh->{Driver}->{Name};
+    if ($driver eq 'mysql') {
+        # XXX This is not portable, too.
+        my ($schema) = map { $_->[1] } @{
+            $self->dbh->selectall_arrayref(
+                sprintf(qq{SHOW CREATE TABLE %s}, $self->dbh->quote_identifier($table)),
+            );
+        };
+        return $schema;
+    } elsif ($driver eq 'SQLite') {
+        my ($schema) = $self->dbh->selectrow_array(
+            q{SELECT sql FROM sqlite_master WHERE name=?},
+            {},
+            $table,
         );
-    };
-    return $schema;
+        return $schema;
+    } else {
+        die "This method is not supported for $driver";
+    }
 }
 
 1;
