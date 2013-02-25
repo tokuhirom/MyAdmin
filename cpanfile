@@ -10,11 +10,16 @@ requires 'File::ShareDir' => 0;
 requires 'SQL::Maker' => 0;
 requires 'MooX::Types::MooseLike' => 0;
 requires Moo => 0;
-requires 'DBIx::Inspector' => 0.09;
+requires 'DBIx::Inspector' => 0.10;
 requires 'JSON' => 2;
 requires 'CPAN';
 requires 'DBD::mysql';
 requires 'Class::Load';
+requires 'Teng';
+requires 'Carp::Always';
+requires 'Class::Accessor::Lite::Lazy';
+
+requires 'DBIx::QueryLog';
 
 on test => sub {
     requires 'Test::More' => 0.98;

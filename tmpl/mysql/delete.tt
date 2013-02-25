@@ -14,8 +14,8 @@
   <li><a href="[% uri_for('/insert', {database => $database, table => $table}) %]">Insert</a></li>
 </ul>
 
-<table class="table table-bordered table-hover" style="max-width: 300px">
-    [% FOR col IN row.columns() %]
+<table class="table table-bordered table-hover table-striped" style="max-width: 300px">
+    [% FOR col IN row.get_column_objects() %]
     <tr>
         <th>[% col.name %]</th>
         <td class="[% IF col.is_numeric() %]numeric[% END %]">

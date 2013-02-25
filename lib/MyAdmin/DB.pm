@@ -1,4 +1,4 @@
-package MyAdmin::MySQL;
+package MyAdmin::DB;
 use strict;
 use warnings;
 use utf8;
@@ -7,10 +7,12 @@ use Data::Page::NoTotalEntries;
 
 use DBI;
 use DBIx::Inspector;
-use Garua;
 use SQL::Maker;
 use MyAdmin::Exception;
 use JSON 2 qw(decode_json);
+use MyAdmin::DB::Teng;
+use MyAdmin::DB::Teng::Loader;
+use Teng::Schema::Table;
 
 __PACKAGE__->load_plugin('Web::CSRFDefender' => {
     post_only => 1,
@@ -29,79 +31,108 @@ __PACKAGE__->add_trigger(
         if ($c->config->{read_only} && $c->request->method ne 'GET') {
             return $c->render(
                 'error.tt', {
-                    message => 'This MyAdmin::MySQL instance run on read only mode.'
+                    exception => MyAdmin::Exception->new(message => 'This MyAdmin::DB instance run on read only mode.')
                 }
             );
         }
     },
 );
 
-use MyAdmin::Accessor::LazyRO (
-    dbh => sub {
-        my $c = shift;
-        my @config = @{$c->config->{database}};
-        $config[3]->{mysql_enable_utf8} ||= 1;
-        $config[3]->{ShowErrorStatement} ||= 1;
-        $config[3]->{RaiseError} = 1;
-        my $dbh = DBI->connect(
-            @config
-        ) or MyAdmin::Exception->throw($DBI::errstr);
-        $dbh->{HandleError} = sub {
-            MyAdmin::Exception->throw($_[0])
-        };
-        $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
-        $dbh;
-    },
-    inspector => sub {
-        my $c = shift;
-        DBIx::Inspector->new(dbh => $c->dbh);
-    },
-    db => sub {
-        my $c = shift;
-        Garua->new(dbh => $c->dbh);
-    },
-    column => sub {
-        my $c = shift;
-        my $column = $c->req->param('column') || die;
-        _validate($column);
-        $column;
-    },
-    column_values => sub {
-        my $c = shift;
-        my %columns;
-        for my $key (grep /^col\./, $c->req->parameters->keys) {
-            my $val = $c->req->param($key);
-            (my $column = $key) =~ s!^col\.!!;
-            $columns{$column} = $val;
+__PACKAGE__->add_trigger(
+    BEFORE_DISPATCH => sub {
+        my $self = shift;
+        if ($self->req->param('database')) {
+            $self->use_db($self->database);
         }
-        return \%columns;
-    },
-    table => sub {
-        my $c = shift;
-        my $table = $c->req->param('table') || die;
-        _validate($table);
-        $table;
-    },
-    database => sub {
-        my $c = shift;
-        my $database = $c->req->param('database') || die;
-        _validate($database);
-        $database;
-    },
-    where => sub {
-        my $c = shift;
-        my $where = decode_json(scalar $c->req->param('where'));
-        die "There is no where" unless %$where;
-
-        # check this where clause just select one row.
-        $c->use_db();
-        my $cnt = $c->db->count($c->table, [\'COUNT(*)'], $where);
-        $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
-
-        # okay, it's valid.
-        $where;
     },
 );
+
+sub _build_teng {
+    my $c = shift;
+
+    my $schema =
+        scalar($c->req->param('table'))
+        ? MyAdmin::DB::Teng::Loader->load(dbh => $c->dbh, table => $c->table)
+        : Teng::Schema->new(namespace => 'MyAdmin::DB::Teng');
+
+    MyAdmin::DB::Teng->new(
+        dbh => $c->dbh,
+        schema => $schema,
+        fields_case => 'NAME',
+    );
+}
+
+sub _build_dbh {
+    my $c = shift;
+    my @config = @{$c->config->{database}};
+    $config[3]->{mysql_enable_utf8} ||= 1;
+    $config[3]->{ShowErrorStatement} ||= 1;
+    $config[3]->{RaiseError} = 1;
+    my $dbh = DBI->connect(
+        @config
+    ) or MyAdmin::Exception->throw($DBI::errstr);
+    $dbh->{HandleError} = sub {
+        use Carp; Carp::cluck($_[0]);
+        MyAdmin::Exception->throw($_[0])
+    };
+    $dbh->do(q{SET SESSION sql_mode=STRICT_TRANS_TABLES;});
+    $dbh;
+}
+
+use Class::Accessor::Lite::Lazy (
+    ro_lazy => [qw(dbh teng inspector column column_values where database table)],
+);
+
+sub _build_inspector {
+    my $c = shift;
+    DBIx::Inspector->new(dbh => $c->dbh);
+}
+
+sub _build_column {
+    my $c = shift;
+    my $column = $c->req->param('column') || die;
+    _validate($column);
+    $column;
+}
+
+sub _build_column_values {
+    my $c = shift;
+    my %columns;
+    for my $key (grep /^col\./, $c->req->parameters->keys) {
+        my $val = $c->req->param($key);
+        (my $column = $key) =~ s!^col\.!!;
+        $columns{$column} = $val;
+    }
+    return \%columns;
+}
+
+sub _build_table {
+    my $c = shift;
+    my $table = $c->req->param('table') || die;
+    _validate($table);
+    $table;
+}
+
+sub _build_database {
+    my $c = shift;
+    my $database = $c->req->param('database') || die;
+    _validate($database);
+    $database;
+}
+
+sub _build_where {
+    my $c = shift;
+    my $where = decode_json(scalar $c->req->param('where'));
+    die "There is no where" unless %$where;
+
+    # check this where clause just select one row.
+    $c->use_db();
+    my $cnt = $c->teng->count($c->table, '*', $where);
+    $cnt == 1 or MyAdmin::Exception->throw("Bad where: $cnt");
+
+    # okay, it's valid.
+    $where;
+}
 
 
 sub _validate {
@@ -119,16 +150,14 @@ get '/' => sub {
     my $c = shift;
 
     $c->render('index.tt' => {
-        databases => [$c->db->databases],
+        databases => [$c->teng->databases],
     });
 };
 
 get '/database' => sub {
     my $c = shift;
 
-    my $dbh = $c->dbh;
-    $c->use_db();
-    my @tables = $c->inspector->tables;
+    my @tables = $c->inspector->tables_and_views(undef);
 
     $c->render('database.tt' => {
         database => $c->database,
@@ -143,19 +172,20 @@ get '/list' => sub {
     my $page = 0 + ( $c->req->param('page') || 1 );
 
     my $column_values = $c->column_values;
-    my ($names, $rows, $pager) = $c->db->search_with_pager(
+    my ($rows, $pager) = $c->teng->search_with_pager(
         $c->table,
-        ['*'],
         +{
             map { $_ => $column_values->{$_} }
             grep { length($column_values->{$_}) > 0 }
             keys %$column_values
         },
-        $page,
-        10
+        {
+            page => $page,
+            rows => 10,
+        }
     );
 
-    my $table = $c->inspector->table($c->table);
+    my $table = $c->inspector->table_or_view($c->table);
 
     $c->render(
         'list.tt' => {
@@ -164,7 +194,7 @@ get '/list' => sub {
 
             columns  => [$table->columns->all],
 
-            names => $names,
+            names => $c->teng->schema->get_table($c->table)->columns,
             rows => $rows,
             pager => $pager,
         },
@@ -174,9 +204,7 @@ get '/list' => sub {
 get '/schema' => sub {
     my $c = shift;
 
-    $c->use_db();
-
-    my $schema = $c->db->schema($c->table);
+    my $schema = $c->teng->get_schema_sql($c->table);
 
     $c->render('schema.tt' => {
         database => $c->database,
@@ -188,7 +216,7 @@ get '/schema' => sub {
 
 get '/insert' => sub {
     my $c = shift;
-    $c->use_db();
+
     my $table = $c->inspector->table($c->table);
     $c->render('insert.tt' => {
         database => $c->database,
@@ -214,7 +242,7 @@ post '/insert' => sub {
         }
         $params{$column} = $val;
     }
-    $c->db->insert($c->table, \%params);
+    $c->teng->insert($c->table, \%params);
 
     return $c->redirect(
         $c->uri_for( '/list', {
@@ -228,13 +256,12 @@ get '/download_column' => sub {
     my ($c) = @_;
 
     my $column = $c->column;
-    $c->use_db();
-    my ($row) = $c->db->single(
+    my ($row) = $c->teng->single(
         $c->table,
-        [$column],
         $c->where,
+        { columns => [$c->column] }
     ) or MyAdmin::Exception->throw('Bad where.');
-    my $value = $row->column($column)->value;
+    my $value = $row->get_column($c->column);
 
     return $c->create_response(
         200,
@@ -250,10 +277,8 @@ get '/download_column' => sub {
 get '/update' => sub {
     my ($c) = @_;
 
-    $c->use_db();
-    my ($row) = $c->db->single(
+    my ($row) = $c->teng->single(
         $c->table,
-        ['*'],
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');
     return $c->render(
@@ -269,8 +294,7 @@ get '/update' => sub {
 post '/update' => sub {
     my $c = shift;
 
-    $c->use_db();
-    $c->db->update(
+    $c->teng->update(
         $c->table,
         $c->column_values,
         $c->where
@@ -286,10 +310,8 @@ post '/update' => sub {
 get '/delete' => sub {
     my ($c) = @_;
 
-    $c->use_db();
-    my ($row) = $c->db->single(
+    my ($row) = $c->teng->single(
         $c->table,
-        ['*'],
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');
     return $c->render(
@@ -305,9 +327,7 @@ get '/delete' => sub {
 post '/delete' => sub {
     my ($c) = @_;
 
-    $c->use_db();
-
-    $c->db->delete(
+    $c->teng->delete(
         $c->table,
         $c->where,
     ) or MyAdmin::Exception->throw('Bad where.');

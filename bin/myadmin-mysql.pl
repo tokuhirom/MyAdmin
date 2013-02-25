@@ -4,7 +4,7 @@ use warnings;
 use utf8;
 use 5.008005;
 
-use MyAdmin::MySQL;
+use MyAdmin::DB;
 use Plack::Loader;
 use Getopt::Long;
 use Plack::Builder;
@@ -16,6 +16,7 @@ GetOptions(
     'dbhost=s' => \my $dbhost,
     'dbport=i' => \my $dbport,
     'p|port=i' => \$http_port,
+    'read_only' => \my $read_only,
 );
 
 my $dsn = 'dbi:mysql:';
@@ -29,13 +30,14 @@ my $app = builder {
     enable 'AccessLog';
     enable 'Session';
 
-    MyAdmin::MySQL->to_app(
+    MyAdmin::DB->to_app(
         {
             database => [
                 $dsn,
                 $username,
                 $password,
-            ]
+            ],
+            read_only => $read_only,
         }
     );
 };
