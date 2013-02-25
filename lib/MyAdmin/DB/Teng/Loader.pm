@@ -10,7 +10,8 @@ sub load {
     my $inspector = DBIx::Inspector->new(dbh => $dbh);
     my $schema = Teng::Schema->new(namespace => 'MyAdmin::DB::Teng');
 
-    for my $table_info ($inspector->tables_and_views()) {
+    my $table = $args{table} || die "Missing mandatory parameter: table";
+    for my $table_info ($inspector->tables_and_views($table)) {
         my $table_name = $table_info->name;
         my @table_pk   = map { $_->name } $table_info->primary_key;
         my @col_names;

@@ -52,7 +52,7 @@ sub _build_teng {
 
     my $schema =
         scalar($c->req->param('table'))
-        ? MyAdmin::DB::Teng::Loader->load(dbh => $c->dbh)
+        ? MyAdmin::DB::Teng::Loader->load(dbh => $c->dbh, table => $c->table)
         : Teng::Schema->new(namespace => 'MyAdmin::DB::Teng');
 
     MyAdmin::DB::Teng->new(
