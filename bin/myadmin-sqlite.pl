@@ -4,6 +4,10 @@ use warnings;
 use utf8;
 use 5.008005;
 
+use File::Spec;
+use File::Basename;
+use lib File::Spec->catdir(dirname(__FILE__), '../lib');
+
 use MyAdmin::DB;
 use Plack::Loader;
 use Getopt::Long;
