@@ -8,8 +8,6 @@ requires 'Exception::Tiny'               => 0;
 requires 'Try::Lite' => '0.0.2';
 requires 'File::ShareDir' => 0;
 requires 'SQL::Maker' => 0;
-requires 'MooX::Types::MooseLike' => 0;
-requires Moo => 0;
 requires 'DBIx::Inspector' => 0.11;
 requires 'JSON' => 2;
 requires 'CPAN';
