@@ -59,3 +59,8 @@ MyAdmin::TheSchwartz - Administration PSGI app for TheSchwartz
         }
     );
 
+=head1 DESCRIPTION
+
+This is a administration site application for L<TheSchwartz>.
+
+

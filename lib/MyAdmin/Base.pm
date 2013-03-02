@@ -90,7 +90,9 @@ sub _init_xslate {
         },
     );
     if (my $tmpl_dirname = delete $xslate_opts{tmpl_dirname}) {
-        unshift @{$xslate_args{path}}, File::Spec->catfile($pkg->resource_dir, 'tmpl/', $tmpl_dirname);
+        my $template_dir = File::Spec->catfile($pkg->resource_dir, 'tmpl/', $tmpl_dirname);
+        print "Template directory is : $template_dir\n";
+        unshift @{$xslate_args{path}}, $template_dir;
     }
     if (my $mods = delete $xslate_opts{module}) {
         push @{$xslate_args{module}}, @$mods;

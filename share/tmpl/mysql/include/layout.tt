@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset=utf8>
-<title>MyAdmin::MySQL</title>
+<title>MyAdmin::DB</title>
 <link href="[% c().uri_for('/static/bootstrap/css/bootstrap.min.css') %]" rel="stylesheet" type="text/css" />
 <link href="[% c().uri_for('/static/css/main.css') %]" rel="stylesheet" type="text/css" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@ body {
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="navbar-inner">
             <div class="container">
-                <a class="brand" href="[% uri_for('/') %]">MyAdmin::MySQL</a>
+                <a class="brand" href="[% uri_for('/') %]">MyAdmin::RDBMS</a>
             </div>
         </div>
     </div>
