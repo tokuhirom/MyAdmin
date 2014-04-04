@@ -1,0 +1,95 @@
+{
+   "abstract" : "My admin site",
+   "author" : [
+      "Tokuhiro Matsuno <tokuhirom AAJKLFJEF@ GMAIL COM>"
+   ],
+   "dynamic_config" : 0,
+   "generated_by" : "Minilla/v0.13.0, CPAN::Meta::Converter version 2.140640",
+   "license" : [
+      "perl_5"
+   ],
+   "meta-spec" : {
+      "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
+      "version" : "2"
+   },
+   "name" : "MyAdmin",
+   "no_index" : {
+      "directory" : [
+         "t",
+         "xt",
+         "inc",
+         "share",
+         "eg",
+         "examples",
+         "author",
+         "builder"
+      ]
+   },
+   "prereqs" : {
+      "configure" : {
+         "requires" : {
+            "CPAN::Meta" : "0",
+            "CPAN::Meta::Prereqs" : "0",
+            "Module::Build" : "0.38"
+         }
+      },
+      "develop" : {
+         "requires" : {
+            "Test::CPAN::Meta" : "0",
+            "Test::MinimumVersion::Fast" : "0.04",
+            "Test::Pod" : "1.41",
+            "Test::Spellunker" : "v0.2.7"
+         }
+      },
+      "runtime" : {
+         "requires" : {
+            "Amon2" : "3.72",
+            "Amon2::Web" : "0",
+            "Class::Accessor::Lite::Lazy" : "0",
+            "DBI" : "0",
+            "DBIx::Inspector" : "0.09",
+            "Data::Page::NoTotalEntries" : "0",
+            "Exception::Tiny" : "0",
+            "File::ShareDir" : "0",
+            "Getopt::Long" : "0",
+            "JSON" : "2",
+            "Plack::App::File" : "0",
+            "Plack::Builder" : "0",
+            "Plack::Loader" : "0",
+            "Pod::Usage" : "0",
+            "Router::Simple::Sinatraish" : "0",
+            "SQL::Maker" : "0",
+            "Teng" : "0",
+            "Teng::Row" : "0",
+            "Teng::Schema::Table" : "0",
+            "Text::Xslate" : "0",
+            "Try::Lite" : "0",
+            "parent" : "0",
+            "perl" : "5.008005"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "Plack::Test" : "0",
+            "Test::More" : "0.98",
+            "Test::Requires" : "0"
+         }
+      }
+   },
+   "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/tokuhirom/MyAdmin/issues"
+      },
+      "homepage" : "https://github.com/tokuhirom/MyAdmin",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/tokuhirom/MyAdmin.git",
+         "web" : "https://github.com/tokuhirom/MyAdmin"
+      }
+   },
+   "version" : "0.0.1",
+   "x_contributors" : [
+      "tokuhirom <tokuhirom@gmail.com>"
+   ]
+}
