@@ -139,7 +139,7 @@ sub _build_where {
 
 sub _validate {
     my $stuff = shift;
-    $stuff =~ /\A[A-Za-z0-9_]+\z/ or die "Invalid name: $stuff";
+    $stuff =~ /\A[A-Za-z0-9_-]+\z/ or die "Invalid name: $stuff";
 }
 
 sub use_db {
