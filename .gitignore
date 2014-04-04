@@ -28,3 +28,4 @@ carton.lock
 !Build/
 !META.json
 !LICENSE
+/cpanfile.snapshot
